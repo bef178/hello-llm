@@ -1,0 +1,28 @@
+server:
+  port: 8482
+
+spring:
+  application:
+    name: llmhub
+
+llmhub:
+  connect-timeout-ms: 3000
+  response-timeout-ms: 0
+  max-in-memory-size-bytes: 2097152
+  max-connections: 500
+  pending-acquire-max-count: 1000
+  pending-acquire-timeout-ms: 5000
+  providers:
+    openai:
+      endpoint: https://api.openai.com/v1/chat/completions
+      api-key: ${OPENAI_API_KEY:}
+    openai2:
+      endpoint: https://api.openai.com/v1/chat/completions
+      api-key: ${OPENAI_API_KEY2:}
+  provider-router:
+    default-provider: openai
+    overrides:
+      openai:
+        model: GPT-5 mini
+      openai2:
+        model: GPT-5.6 Sol

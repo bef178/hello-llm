@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <properties>
+        <property name="APP_NAME">llmhub</property>
+        <property name="LOG_HOME">${spring:spring.log.home:-./var/log}</property>
+        <property name="CONSOLE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level - [%tid] %c{1.} - %X{traceId} %X{requestId} %X{sessionId} %X{deviceId} - %msg%n</property>
+    </properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}"/>
+        </Console>
+        <RollingFile name="RollingInfo" fileName="${LOG_HOME}/${APP_NAME}_info.log" filePattern="${LOG_HOME}/${APP_NAME}_info_%d{yyyyMMdd-HH}.log">
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!-- reproduces the deprecated JsonLayout's exact schema (so existing ELK parsing keeps working) without its Jackson databind/reflection overhead -->
+            <JsonTemplateLayout eventTemplateUri="classpath:JsonLayout.json">
+                <EventTemplateAdditionalField key="contextMap" format="JSON" value='{"$resolver": "mdc"}'/>
+                <EventTemplateAdditionalField key="logtime" format="JSON"
+                        value='{"$resolver": "timestamp", "pattern": {"format": "yyyy-MM-dd&apos;T&apos;HH:mm:ss.SSSXXX"}}'/>
+            </JsonTemplateLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy fileIndex="nomax"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <SpringProfile name="local | default">
+            <Root level="INFO" includeLocation="false">
+                <AppenderRef ref="Console"/>
+            </Root>
+        </SpringProfile>
+        <SpringProfile name="!local &amp; !default">
+            <Root level="INFO" includeLocation="false">
+                <AppenderRef ref="RollingInfo"/>
+            </Root>
+        </SpringProfile>
+    </Loggers>
+</Configuration>
