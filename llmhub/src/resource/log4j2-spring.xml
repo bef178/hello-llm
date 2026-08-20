@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <properties>
+        <property name="APP_NAME">llmhub</property>
+        <property name="LOG_HOME">${spring:spring.log.home:-./var/log}</property>
+        <property name="CONSOLE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level - [%tid] %c{1.} - %X{traceId} %X{requestId} %X{sessionId} %X{deviceId} - %msg%n</property>
+    </properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}" />
+        </Console>
+        <RollingFile name="RollingInfo"
+                fileName="${LOG_HOME}/${APP_NAME}_info.log"
+                filePattern="${LOG_HOME}/${APP_NAME}_info_%d{yyyyMMdd-HH}.log"
+                immediateFlush="false">
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY" />
+            <JsonTemplateLayout eventTemplateUri="classpath:JsonLayout.json">
+                <EventTemplateAdditionalField format="JSON" key="logtime"
+                    value='{"$resolver": "timestamp", "pattern": {"format": "yyyy-MM-dd&apos;T&apos;HH:mm:ss.SSSXXX"}}' />
+                <EventTemplateAdditionalField format="JSON" key="time"
+                    value='{"$resolver": "timestamp", "pattern": {"format": "yyyy-MM-dd&apos;T&apos;HH:mm:ss.SSSXXX"}}' />
+                <EventTemplateAdditionalField format="JSON" key="trace_id"
+                    value='{"$resolver": "mdc", "key": "traceId"}' />
+                <EventTemplateAdditionalField format="JSON" key="request_id"
+                    value='{"$resolver": "mdc", "key": "requestId"}' />
+                <EventTemplateAdditionalField format="JSON" key="session_id"
+                    value='{"$resolver": "mdc", "key": "sessionId"}' />
+                <EventTemplateAdditionalField format="JSON" key="device_id"
+                    value='{"$resolver": "mdc", "key": "deviceId"}' />
+            </JsonTemplateLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+            </Policies>
+            <DefaultRolloverStrategy fileIndex="nomax" />
+        </RollingFile>
+        <Async name="AsyncRollingInfo" bufferSize="1024" shutdownTimeout="5000">
+            <AppenderRef ref="RollingInfo" />
+        </Async>
+    </Appenders>
+    <Loggers>
+        <SpringProfile name="default">
+            <Root includeLocation="false" level="INFO">
+                <AppenderRef ref="Console" />
+            </Root>
+        </SpringProfile>
+        <SpringProfile name="!default">
+            <Root includeLocation="false" level="INFO">
+                <AppenderRef ref="AsyncRollingInfo" />
+            </Root>
+        </SpringProfile>
+    </Loggers>
+</Configuration>
